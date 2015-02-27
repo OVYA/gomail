@@ -151,9 +151,9 @@ func (msg *Message) SetDateHeader(field string, date time.Time) {
 	msg.header[field] = []string{msg.FormatDate(date)}
 }
 
-// FormatDate formats a date as a valid RFC RFC822 date.
+// FormatDate formats a date as a valid RFC RFC822Z date.
 func (msg *Message) FormatDate(date time.Time) string {
-	return date.Format(time.RFC822)
+	return date.Format(time.RFC822Z)
 }
 
 // GetHeader gets a header field.
