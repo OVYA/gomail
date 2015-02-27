@@ -336,7 +336,10 @@ func TestEmbedded(t *testing.T) {
 	msg := NewMessage()
 	msg.SetHeader("From", "from@example.com")
 	msg.SetHeader("To", "to@example.com")
-	msg.Embed(CreateFile("image.jpg", []byte("Content")))
+	f := CreateFile("image1.jpg", []byte("Content 1"))
+	f.ContentID = "test-content-id"
+	msg.Embed(f)
+	msg.Embed(CreateFile("image2.jpg", []byte("Content 2")))
 	msg.SetBody("text/plain", "Test")
 
 	want := message{
@@ -352,12 +355,19 @@ func TestEmbedded(t *testing.T) {
 			"\r\n" +
 			"Test\r\n" +
 			"--_BOUNDARY_1_\r\n" +
-			"Content-Type: image/jpeg; name=\"image.jpg\"\r\n" +
-			"Content-Disposition: inline; filename=\"image.jpg\"\r\n" +
-			"Content-ID: <image.jpg>\r\n" +
+			"Content-Type: image/jpeg; name=\"image1.jpg\"\r\n" +
+			"Content-Disposition: inline; filename=\"image1.jpg\"\r\n" +
+			"Content-ID: <test-content-id>\r\n" +
 			"Content-Transfer-Encoding: base64\r\n" +
 			"\r\n" +
-			base64.StdEncoding.EncodeToString([]byte("Content")) + "\r\n" +
+			base64.StdEncoding.EncodeToString([]byte("Content 1")) + "\r\n" +
+			"--_BOUNDARY_1_\r\n" +
+			"Content-Type: image/jpeg; name=\"image2.jpg\"\r\n" +
+			"Content-Disposition: inline; filename=\"image2.jpg\"\r\n" +
+			"Content-ID: <image2.jpg>\r\n" +
+			"Content-Transfer-Encoding: base64\r\n" +
+			"\r\n" +
+			base64.StdEncoding.EncodeToString([]byte("Content 2")) + "\r\n" +
 			"--_BOUNDARY_1_--\r\n",
 	}
 
@@ -424,13 +434,13 @@ func TestQpLineLength(t *testing.T) {
 	msg.SetHeader("From", "from@example.com")
 	msg.SetHeader("To", "to@example.com")
 	msg.SetBody("text/plain",
-		strings.Repeat("0", 79)+"\r\n"+
-			strings.Repeat("0", 78)+"à\r\n"+
-			strings.Repeat("0", 77)+"à\r\n"+
+		strings.Repeat("0", 77)+"\r\n"+
 			strings.Repeat("0", 76)+"à\r\n"+
 			strings.Repeat("0", 75)+"à\r\n"+
-			strings.Repeat("0", 78)+"\r\n"+
-			strings.Repeat("0", 79)+"\n")
+			strings.Repeat("0", 74)+"à\r\n"+
+			strings.Repeat("0", 73)+"à\r\n"+
+			strings.Repeat("0", 76)+"\r\n"+
+			strings.Repeat("0", 77)+"\n")
 
 	want := message{
 		from: "from@example.com",
@@ -440,13 +450,13 @@ func TestQpLineLength(t *testing.T) {
 			"Content-Type: text/plain; charset=UTF-8\r\n" +
 			"Content-Transfer-Encoding: quoted-printable\r\n" +
 			"\r\n" +
-			strings.Repeat("0", 78) + "=\r\n0\r\n" +
-			strings.Repeat("0", 78) + "=\r\n=C3=A0\r\n" +
-			strings.Repeat("0", 77) + "=\r\n=C3=A0\r\n" +
+			strings.Repeat("0", 76) + "=\r\n0\r\n" +
 			strings.Repeat("0", 76) + "=\r\n=C3=A0\r\n" +
-			strings.Repeat("0", 75) + "=C3=\r\n=A0\r\n" +
-			strings.Repeat("0", 78) + "\r\n" +
-			strings.Repeat("0", 78) + "=\r\n0\n",
+			strings.Repeat("0", 75) + "=\r\n=C3=A0\r\n" +
+			strings.Repeat("0", 74) + "=\r\n=C3=A0\r\n" +
+			strings.Repeat("0", 73) + "=C3=\r\n=A0\r\n" +
+			strings.Repeat("0", 76) + "\r\n" +
+			strings.Repeat("0", 76) + "=\r\n0\n",
 	}
 
 	testMessage(t, msg, 0, want)
@@ -466,7 +476,7 @@ func TestBase64LineLength(t *testing.T) {
 			"Content-Type: text/plain; charset=UTF-8\r\n" +
 			"Content-Transfer-Encoding: base64\r\n" +
 			"\r\n" +
-			strings.Repeat("MDAw", 19) + "MA\r\n==",
+			strings.Repeat("MDAw", 19) + "\r\nMA==",
 	}
 
 	testMessage(t, msg, 0, want)

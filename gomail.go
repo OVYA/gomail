@@ -217,9 +217,10 @@ func (msg *Message) GetBodyWriter(contentType string) io.Writer {
 
 // A File represents a file that can be attached or embedded in an email.
 type File struct {
-	Name     string
-	MimeType string
-	Content  []byte
+	Name      string
+	MimeType  string
+	Content   []byte
+	ContentID string
 }
 
 // OpenFile opens a file on disk to create a gomail.File.
@@ -271,7 +272,7 @@ func (msg *Message) Embed(image ...*File) {
 	if msg.embedded == nil {
 		msg.embedded = image
 	} else {
-		msg.embedded = append(msg.attachments, image...)
+		msg.embedded = append(msg.embedded, image...)
 	}
 }
 
